@@ -7,7 +7,7 @@ import uuid
 import sys
 
 
-def zipdir(paths, zip_file):
+def zip_dir(paths, zip_file):
     """
     Archives files to zip
     """
@@ -46,7 +46,7 @@ def main(folders=None):
     zip_name = str(uuid.uuid4()) + ".zip"
 
     with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        zipdir(folders, zip_file)
+        zip_dir(folders, zip_file)
 
 
 if __name__ == '__main__':
