@@ -31,7 +31,7 @@ def download(url, output_name):
 
 def search_on_openverse(name, count):
     """
-    Searches name on https://commons.wikimedia.org and parse image urls
+    Searches name on https://openverse.org and parse image urls
     :return dict image urls
     """
     headers = {
