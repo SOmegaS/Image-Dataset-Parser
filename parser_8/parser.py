@@ -55,8 +55,20 @@ def search_on_openverse(name, count):
 
         for item in data['results']:
             image_link = item['url']
+            creator = item['creator']
+            creator_url = item['creator_url']
+            license_type = item['license']
+            license_version = item['license_version']
+            license_url = item['license_url']
 
-            res.append(image_link)
+            res.append({
+                'creator': creator,
+                'creator_url': creator_url,
+                'license_type': license_type,
+                'license_version': license_version,
+                'license_url': license_url,
+                'image_link': image_link
+            })
 
             image_count += 1
             if image_count >= count:
@@ -82,9 +94,11 @@ def main():
     for query_name, query_number in query.items():
         links_to_download[query_name] = search_on_openverse(query_name, query_number)
 
-    for name, links in links_to_download.items():
-        for index, link in enumerate(links):
-            download(link, f"{path}{name}/{index}.jpg")
+    for name, items in links_to_download.items():
+        for index, item in enumerate(items):
+            download(item['image_link'], f"{path}{name}/{index}.jpg")
+        with open(f"{path}{name}/authority.json", "a", encoding="utf-8") as file:
+            json.dump(links_to_download, file, indent=4, ensure_ascii=False)
 
 
 if __name__ == '__main__':
