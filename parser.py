@@ -1,56 +1,74 @@
 import json
 import os
 import sys
+import csv
 import httplib2
 import requests
 from bs4 import BeautifulSoup
-from google_images_search import GoogleImagesSearch
+#from google_images_search import GoogleImagesSearch
 
-path = "../images/"
-
+path = "images/"
+path_for_save = "save/"
 
 class Parser:
 
     @staticmethod
-    def make_dirs(query, dirs_path):
+    def make_dirs(query, dirs_path, save_path, parser_count):
         if dirs_path[-1] != '/':
             dirs_path += '/'
+        if save_path[-1] != '/':
+            save_path += '/'
         if not os.path.exists(dirs_path):
             os.makedirs(dirs_path)
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
         for query_name, _ in query.items():
             if not os.path.exists(f"{dirs_path}{query_name}/"):
                 os.mkdir(f"{dirs_path}{query_name}/")
+        for i in range(1, parser_count + 1):
+            os.mkdir(f"{save_path}{i}")
+            for query_name, _ in query.items():
+                if not os.path.exists(f"{save_path}{str(i)}/{query_name}/"):
+                    os.mkdir(f"{save_path}{i}/{query_name}")
 
     def download(self, url, output_name):
         _, content = httplib2.Http('.cache').request(url)
         with open(output_name, 'wb') as out:
             out.write(content)
 
-    def parse(self, query, perc):
+    def parse(self, query, perc, number_of_parser):
         links_to_download = dict()
         for query_name, query_number in query.items():
             num = round(query_number * perc)
-            links_to_download[query_name] = self.search(query_name, num)
+            links_to_download[query_name] = self.search(query_name, num, number_of_parser)
         for name, links in links_to_download.items():
             for index, link in enumerate(links):  # get links array
-                if self.__class__.__name__ == "Openverse":  # this should be done for each parser at the end (licences)
-                    link = link['image_link']
                 self.download(link,
                               f"{path}{name}/{index + 1}_{self.__class__.__name__}.jpg")  # download
-            if self.__class__.__name__ == "Openverse":
-                with open(f"{path}{name}/authority.json", "a", encoding="utf-8") as file:
-                    json.dump(links_to_download, file, indent=4, ensure_ascii=False)
 
-    def search(self, name, count):
+    @staticmethod
+    def links_from_file(last_id, path_to_file):
+        """
+        get list of links from file from last_id
+        """
+        links = []
+        with open(path_to_file, 'r') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if int(row['id']) > last_id:
+                    links.append(row['link'])
+        return links
+
+    def search(self, name, count, number_of_parser):
         pass
 
-    def search_images_by_links(self, list_of_links, count):
+    def search_images_by_links(self, list_of_links, name, count, number_of_parser):
         pass
 
 
 class Burst(Parser):
 
-    def search(self, name, count):
+    def search(self, name, count, number_of_parser):
         """
         Searches name on unsplash.com and parse image urls
         :return dict image urls
@@ -58,35 +76,38 @@ class Burst(Parser):
         page_counter = 1
         image_count = 0
         res = []
-        while image_count < count:
-            url = f"https://burst.shopify.com/photos/search?" \
-                  f"q={name}&" \
-                  f"page={page_counter}"
-            try:
-                req = requests.get(url=url, timeout=5)
-            except requests.exceptions.ReadTimeout:
-                continue  # What to do?
-
-            soup = BeautifulSoup(req.text, "html.parser")
-            imgs = soup.find_all("img")
-            for img in imgs:
+        with open(path_for_save + str(number_of_parser) + "/" + name + "/db.csv", 'w') as file:
+            writer = csv.writer(file)
+            writer.writerow(['id', 'link', 'creator', 'creator_url', 'license_type', 'license_version', 'license_url'])
+            while image_count < count:
+                url = f"https://burst.shopify.com/photos/search?" \
+                      f"q={name}&" \
+                      f"page={page_counter}"
                 try:
-                    start = img["src"].rfind("https://")
-                    end = img["src"].rfind("?width=")
-                    # print(img["src"][start:end])
-                    res.append(img["src"][start:end] + "?width=1024")
-                    image_count += 1
-                    if image_count >= count:
-                        break
-                except KeyError:
-                    pass
-            page_counter += 1
+                    req = requests.get(url=url, timeout=5)
+                except requests.exceptions.ReadTimeout:
+                    continue  # What to do?
+
+                soup = BeautifulSoup(req.text, "html.parser")
+                imgs = soup.find_all("img")
+                for img in imgs:
+                    try:
+                        start = img["src"].rfind("https://")
+                        end = img["src"].rfind("?width=")
+                        # print(img["src"][start:end])
+                        res.append(img["src"][start:end] + "?width=1024")
+                        image_count += 1
+                        writer.writerow([image_count, res[-1], "-", "-", "-", "-", "-"])
+                        if image_count >= count:
+                            break
+                    except KeyError:
+                        pass
+                page_counter += 1
         return res
 
 
 class Google(Parser):
-
-    def search(self, name, count):
+    def search(self, name, count, number_of_parser):
         """
         Searches name on google.com and parse image urls
         :return dict image urls
@@ -106,12 +127,21 @@ class Google(Parser):
             # 'imgColorType': 'color|gray|mono|trans|imgColorTypeUndefined'  ##
         }
         gis.search(search_params=_search_params)
-        return [image.url for image in gis.results()]
+        result = []
+        with open(path_for_save + str(number_of_parser) + "/" + name + "/db.csv", 'w') as file:
+            writer = csv.writer(file)
+            writer.writerow(['id', 'link', 'creator', 'creator_url', 'license_type', 'license_version', 'license_url'])
+            image_count = 0
+            for image in gis.results():
+                result.append(image)
+                image_count += 1
+                writer.writerow([image_count, result[-1], "-", "-", "-", "-", "-"])
+        return result
 
 
 class Openverse(Parser):
 
-    def search(self, name, count):
+    def search(self, name, count, number_of_parser):
         """
         Searches name on https://openverse.org and parse image urls
         :return dict image urls
@@ -126,36 +156,33 @@ class Openverse(Parser):
         page_counter = 1
         image_count = 0
         res = []
-        while image_count < count:
-            url = f"https://api.openverse.engineering/v1/images/?format=json&page={page_counter}&q={name}"
-            try:
-                req = response = requests.get(url, headers=headers, timeout=1)
-            except requests.exceptions.ReadTimeout:
-                continue  # What to do?
+        with open(path_for_save + str(number_of_parser) + "/" + name + "/db.csv", 'w') as file:
+            writer = csv.writer(file)
+            writer.writerow(['id', 'link', 'creator', 'creator_url', 'license_type', 'license_version', 'license_url'])
+            while image_count < count:
+                url = f"https://api.openverse.engineering/v1/images/?format=json&page={page_counter}&q={name}"
+                try:
+                    req = response = requests.get(url, headers=headers, timeout=1)
+                except requests.exceptions.ReadTimeout:
+                    continue  # What to do?
 
-            data = json.loads(req.text)
+                data = json.loads(req.text)
 
-            for item in data['results']:
-                image_link = item['url']
-                creator = item['creator']
-                creator_url = item['creator_url']
-                license_type = item['license']
-                license_version = item['license_version']
-                license_url = item['license_url']
+                for item in data['results']:
+                    image_link = item['url']
+                    creator = item['creator']
+                    creator_url = item['creator_url']
+                    license_type = item['license']
+                    license_version = item['license_version']
+                    license_url = item['license_url']
+                    res.append(image_link)
+                    image_count += 1
+                    writer.writerow([image_count, res[-1], creator, creator_url, license_type,
+                                     license_version, license_url])
 
-                res.append({
-                    'creator': creator,
-                    'creator_url': creator_url,
-                    'license_type': license_type,
-                    'license_version': license_version,
-                    'license_url': license_url,
-                    'image_link': image_link
-                })
-
-                image_count += 1
-                if image_count >= count:
-                    break
-            page_counter += 1
+                    if image_count >= count:
+                        break
+                page_counter += 1
         return res
 
 
@@ -212,7 +239,7 @@ class Openverse(Parser):
 
 class Unsplash(Parser):
 
-    def search(self, name, count):
+    def search(self, name, count, number_of_parser):
         """
         Searches name on unsplash.com and parse image urls
         :return dict image urls
@@ -226,28 +253,32 @@ class Unsplash(Parser):
         page_counter = 1
         image_count = 0
         res = []
-        while image_count < count:
-            url = f"https://unsplash.com/napi/search/photos?" \
-                  f"query={name}&" \
-                  f"per_page=20&page={page_counter}"
-            try:
-                req = requests.get(url=url, headers=headers, timeout=1)
-            except requests.exceptions.ReadTimeout:
-                continue  # What to do?
-            data = json.loads(req.text)
+        with open(path_for_save + str(number_of_parser) + "/" + name + "/db.csv", 'w') as file:
+            writer = csv.writer(file)
+            writer.writerow(['id', 'link', 'creator', 'creator_url', 'license_type', 'license_version', 'license_url'])
+            while image_count < count:
+                url = f"https://unsplash.com/napi/search/photos?" \
+                      f"query={name}&" \
+                      f"per_page=20&page={page_counter}"
+                try:
+                    req = requests.get(url=url, headers=headers, timeout=1)
+                except requests.exceptions.ReadTimeout:
+                    continue  # What to do?
+                data = json.loads(req.text)
 
-            for item in data['results']:
-                image_link = item["urls"]["full"]
+                for item in data['results']:
+                    image_link = item["urls"]["full"]
 
-                if "plus.unsplash" in image_link:
-                    continue
+                    if "plus.unsplash" in image_link:
+                        continue
 
-                res.append(image_link)
+                    res.append(image_link)
+                    image_count += 1
+                    writer.writerow([image_count, res[-1], "-", "-", "-", "-", "-"])
 
-                image_count += 1
-                if image_count >= count:
-                    break
-            page_counter += 1
+                    if image_count >= count:
+                        break
+                page_counter += 1
         return res
 
 
@@ -262,7 +293,7 @@ class Vecteezy(Parser):
         out.write(resource.content)
         out.close()
 
-    def search(self, name, count):
+    def search(self, name, count, number_of_parser):
         """
         Searches name on https://vecteezy.com and parse image urls
         :return dict image urls
@@ -291,9 +322,9 @@ class Vecteezy(Parser):
                 if image_count >= count:
                     break
             page_counter += 1
-        return self.search_images_by_links(res, count)
+        return self.search_images_by_links(res, name, count, number_of_parser)
 
-    def search_images_by_links(self, list_of_links, count):
+    def search_images_by_links(self, list_of_links, name, count, number_of_parser):
         """
             Searches name on https://vecteezy.com and parse image urls
             :return dict image urls
@@ -306,26 +337,30 @@ class Vecteezy(Parser):
         page_counter = 0
         image_count = 0
         res = []
-        while image_count < count:
-            url = list_of_links[image_count]
-            try:
-                req = requests.get(url=url, headers=headers, timeout=1)
-            except requests.exceptions.ReadTimeout:
-                continue  # What to do?
-            soup = BeautifulSoup(req.content, 'html.parser')
-            links = soup.findAll('img', {'class': 'ez-resource-show__preview__image'})
-            for item in links:
-                link = item['src']
-                res.append(link)
-                image_count += 1
-                if image_count >= count:
-                    break
-            page_counter += 1
+        with open(path_for_save + str(number_of_parser) + "/" + name + "/db.csv", 'w') as file:
+            writer = csv.writer(file)
+            writer.writerow(['id', 'link', 'creator', 'creator_url', 'license_type', 'license_version', 'license_url'])
+            while image_count < count:
+                url = list_of_links[image_count]
+                try:
+                    req = requests.get(url=url, headers=headers, timeout=1)
+                except requests.exceptions.ReadTimeout:
+                    continue  # What to do?
+                soup = BeautifulSoup(req.content, 'html.parser')
+                links = soup.findAll('img', {'class': 'ez-resource-show__preview__image'})
+                for item in links:
+                    link = item['src']
+                    res.append(link)
+                    image_count += 1
+                    writer.writerow([image_count, res[-1], "-", "-", "-", "-", "-"])
+                    if image_count >= count:
+                        break
+                page_counter += 1
         return res
 
 
 class Wikimedia(Parser):
-    def search(self, name, count):
+    def search(self, name, count, number_of_parser):
         """
         Searches name on https://commons.wikimedia.org and parse image urls
         :return dict image urls
@@ -338,23 +373,27 @@ class Wikimedia(Parser):
         page_counter = 0
         image_count = 0
         res = []
-        while image_count < count:
-            url = f"https://commons.m.wikimedia.org/w/api.php?action=query&format=json&uselang=en&generator=search&gsrsearch=filetype%3Abitmap%7Cdrawing%20-fileres%3A0%20{name}&gsrlimit=40&gsroffset={page_counter * 40}&gsrinfo=totalhits%7Csuggestion&gsrprop=size%7Cwordcount%7Ctimestamp%7Csnippet&prop=info%7Cimageinfo%7Centityterms&inprop=url&gsrnamespace=6&iiprop=url%7Csize%7Cmime&iiurlheight=180&wbetterms=label"
-            try:
-                req = requests.get(url=url, headers=headers, timeout=1)
-            except requests.exceptions.ReadTimeout:
-                continue  # What to do?
-            data = json.loads(req.text)
+        with open(path_for_save + str(number_of_parser) + "/" + name + "/db.csv", 'w') as file:
+            writer = csv.writer(file)
+            writer.writerow(['id', 'link', 'creator', 'creator_url', 'license_type', 'license_version', 'license_url'])
+            while image_count < count:
+                url = f"https://commons.m.wikimedia.org/w/api.php?action=query&format=json&uselang=en&generator=search&gsrsearch=filetype%3Abitmap%7Cdrawing%20-fileres%3A0%20{name}&gsrlimit=40&gsroffset={page_counter * 40}&gsrinfo=totalhits%7Csuggestion&gsrprop=size%7Cwordcount%7Ctimestamp%7Csnippet&prop=info%7Cimageinfo%7Centityterms&inprop=url&gsrnamespace=6&iiprop=url%7Csize%7Cmime&iiurlheight=180&wbetterms=label"
+                try:
+                    req = requests.get(url=url, headers=headers, timeout=1)
+                except requests.exceptions.ReadTimeout:
+                    continue  # What to do?
+                data = json.loads(req.text)
 
-            for item in data['query']['pages']:
-                image_link = data['query']['pages'][item]['imageinfo'][0]['url']
+                for item in data['query']['pages']:
+                    image_link = data['query']['pages'][item]['imageinfo'][0]['url']
 
-                res.append(image_link)
+                    res.append(image_link)
+                    image_count += 1
+                    writer.writerow([image_count, res[-1], "-", "-", "-", "-", "-"])
 
-                image_count += 1
-                if image_count >= count:
-                    break
-            page_counter += 1
+                    if image_count >= count:
+                        break
+                page_counter += 1
         return res
 
 
@@ -367,9 +406,9 @@ def main():
     query = {  # testing query
         "train": 100
     }
-    parser.make_dirs(query, path)
-    for prs in parsers:
-        prs.parse(query, perc)
+    parser.make_dirs(query, path, path_for_save, amount_const)
+    for i in range(0, amount_const):
+        parsers[i].parse(query, perc, i + 1)
 
 
 if __name__ == "__main__":
