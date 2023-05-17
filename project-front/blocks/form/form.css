@@ -1,0 +1,7 @@
+.form {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    max-width: 1000px;
+    width: 100%;
+}

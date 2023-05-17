@@ -1,0 +1,7 @@
+.form__container-item {
+    display: grid;
+    width: 680px;
+    grid-template-columns: 550px 65px 40px;
+    column-gap: 10px;
+    position: relative;
+}

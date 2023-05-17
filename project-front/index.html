@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parser</title>
+    <link rel="stylesheet" href="./index.css">
+</head>
+
+<body class="body">
+    <header class="header">
+        <h1 class="header__title">Dataset parser</h1>
+    </header>
+    <main class="main">
+        <form class="form" novalidate>
+            <button class="form__submit-button" disabled>Submit</button>
+            <div class="form__result-container">
+            </div>
+            <h2 class="form__title">Input query</h2>
+            <div class="form__inputs-container">
+            </div>
+            <button class="form__add-button" type="button"></button>
+        </form>
+    </main>
+    <template id="form__container-item">
+        <div class="form__container-item">
+            <input class="form__input" name="classname" id="classname" type="text" required>
+            <input class="form__input" name="count" id="count" type="number" maxlength="4" required>
+            <button class="form__delete-button" type="button"></button>
+            <span class="form__form-error classname-error"></span>
+            <span class="form__form-error count-error"></span>
+        </div>
+    </template>
+    <template id="form__result-item">
+        <div class="form__result-item">
+            <a class="form__result-link" href="#" download=""></a>
+        </div>
+    </template>
+    <script src="./index.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,19 @@
+.form__input {
+    border: none;
+    height: 40px;
+    border-radius: 20px;
+    padding-left: 20px;
+    margin-bottom: 20px;
+    font-size: 18px;
+    appearance: none;
+}
+
+.form__input:last-of-type {
+    padding: 0;
+    text-align: center;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
