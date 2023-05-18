@@ -1,4 +1,6 @@
 imgs/
+images/
+save/
 .cache/
 .idea/
 parser_*/data/*
