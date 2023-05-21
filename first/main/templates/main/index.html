@@ -1,0 +1,13 @@
+{% extends 'main/layout.html' %}
+
+{% block title %}Главная страница{% endblock %}
+
+{%block content%}
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Получить изображения</button>
+    </form>
+
+
+{% endblock%}

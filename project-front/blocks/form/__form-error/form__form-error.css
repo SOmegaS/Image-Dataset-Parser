@@ -1,0 +1,12 @@
+.form__form-error {
+    display: none;
+    color: red;
+    position: absolute;
+    top: 44px;
+    left: 20px;
+}
+
+.form__form-error:last-of-type {
+    top: 44px;
+    left: 500px;
+}

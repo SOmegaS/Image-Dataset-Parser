@@ -1,0 +1,26 @@
+.form__delete-button {
+    position: absolute;
+    margin: 5px;
+    width: 30px;
+    height: 30px;
+    right: 0;
+    top: 0;
+    border: none;
+    border-radius: 5px;
+    background-color: black;
+    background-image: url(../../../images/Group.svg);
+    background-repeat: no-repeat;
+    background-size: 17px 17px;
+    background-position: center;
+    transition: opacity .4s ease-out;
+}
+
+.form__delete-button:hover {
+    opacity: .7;
+    cursor: pointer;
+}
+
+.form__delete-button:disabled {
+    opacity: .5;
+    cursor: initial;
+}

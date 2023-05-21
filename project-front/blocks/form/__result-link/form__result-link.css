@@ -1,0 +1,17 @@
+.form__result-link {
+    display: block;
+    margin-bottom: 12px;
+    line-height: 16px;
+    font-size: 20px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden; 
+    text-decoration: none;
+    color: #1e67c5;
+    transition: color .4s ease-out;
+}
+
+.form__result-link:hover {
+    color: #134381;
+    cursor: pointer;
+}

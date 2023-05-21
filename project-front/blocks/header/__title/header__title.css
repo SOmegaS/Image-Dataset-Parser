@@ -1,0 +1,5 @@
+.header__title {
+    font-weight: 600;
+    font-size: 42px;
+    line-height: calc(48/42);
+}
