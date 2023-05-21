@@ -22,7 +22,7 @@ def main(percent, query):
     for i in range(0, amount_const):
         new_thread = threading.Thread(target=parsers[i].parse, args=(query, perc, i + 1))
         new_thread.start()
-    while (threading.active_count() > 1):
+    while threading.active_count() > 1:
         time.sleep(0.5)
 
 

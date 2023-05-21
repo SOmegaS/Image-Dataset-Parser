@@ -44,5 +44,4 @@ class Burst(Parser):
                     except KeyError:
                         pass
                 page_counter += 1
-            print(res)
         return res

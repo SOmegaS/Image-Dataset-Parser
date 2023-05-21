@@ -68,10 +68,14 @@ class Vecteezy(Parser):
                     ['id', 'link', 'creator', 'creator_url', 'license_type', 'license_version',
                      'license_url'])
             while image_count < count:
-                url = list_of_links[image_count]
+                url = 'https://vecteezy.com' + list_of_links[image_count - start]
+                tries = 1
                 try:
                     req = requests.get(url=url, headers=headers, timeout=1000)
-                except requests.exceptions.ReadTimeout:
+                except Exception:
+                    if tries >= 5:
+                        break
+                    tries += 1
                     continue  # What to do?
                 soup = BeautifulSoup(req.content, 'html.parser')
                 links = soup.findAll('img', {'class': 'ez-resource-show__preview__image'})
