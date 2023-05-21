@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -6,7 +7,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Parser</title>
-    <link rel="stylesheet" href="./index.css">
+    <link rel="stylesheet" href="{% static 'main/index.css' %}">
 </head>
 
 <body class="body">
@@ -15,6 +16,7 @@
     </header>
     <main class="main">
         <form class="form" novalidate>
+            {% csrf_token %}
             <button class="form__submit-button" disabled>Submit</button>
             <div class="form__result-container">
             </div>
@@ -38,7 +40,7 @@
             <a class="form__result-link" href="#" download=""></a>
         </div>
     </template>
-    <script src="./index.js"></script>
+    <script src="{% static 'main/index.js' %}"></script>
 </body>
 
 </html>

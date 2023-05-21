@@ -52,27 +52,30 @@ function createDownloader(obj) {  // obj = {array: [{link: ..., name: ...} ...]}
 
 inputForm.addEventListener('submit', (evt) => {
     evt.preventDefault();
-    const classArray = Array.from(document.querySelectorAll('input[name="classname"]'))
-    const countArray = Array.from(document.querySelectorAll('input[name="count"]'))
+    const classArray = Array.from(document.querySelectorAll('input[name="classname"]')).map((item) => {
+        return item.value;
+    })
+    const countArray = Array.from(document.querySelectorAll('input[name="count"]')).map((item) => {
+        return item.value;
+    })
     renderLoading(true);
-    createDownloader({array: [{link: "./images/Vector.svg", name: "First class"}]})  //demo
-    // fetch('', {
-    //     method: 'POST',
-    //     headers: {
-    //         // authorization: 'bd0a4522-502b-47b6-9943-4c4f37572342',
-    //         'Content-Type': 'application/json'
-    //     },
-    //     body: JSON.stringify({
-    //         class: classArray,
-    //         count: countArray
-    //     })
-    // })
-    //     .then(checkResponse)
-    //     .then((res) => {
-    //         createDownloader(res)
-    //     })
-    //     .finally(() => renderLoading(false))
-    //     .catch((err) => console.log(err));
+    //createDownloader({array: [{link: "./images/Vector.svg", name: "First class"}]})  //demo
+    fetch('', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            class: classArray,
+            count: countArray
+        })
+    })
+    .then(checkResponse)
+    .then((res) => {
+        createDownloader(res)
+    })
+    .finally(() => renderLoading(false))
+    .catch((err) => console.log(err));
 })
 
 // validation
