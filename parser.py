@@ -1,7 +1,9 @@
 import sys
+import threading
+import time
 from parsers.base_parser import Parser
 from parsers.burst import Burst
-from parsers.google import Google
+# from parsers.google import Google
 from parsers.unsplash import Unsplash
 from parsers.openverse import Openverse
 from parsers.vecteezy import Vecteezy
@@ -18,7 +20,10 @@ def main(percent, query):
     perc = 1 / amount_const
     Parser.make_dirs(query, path, path_for_save, amount_const)
     for i in range(0, amount_const):
-        parsers[i].parse(query, perc, i + 1)
+        new_thread = threading.Thread(target=parsers[i].parse, args=(query, perc, i + 1))
+        new_thread.start()
+    while (threading.active_count() > 1):
+        time.sleep(0.5)
 
 
 if __name__ == "__main__":
