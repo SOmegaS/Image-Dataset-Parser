@@ -19,6 +19,8 @@ addButton.addEventListener('click', () => {
 
 function checkResponse(res) {
     if (res.ok) {
+        renderLoading(false);
+        console.log("finished");
         return res.json();
     }
     return Promise.reject(`Ошибка ${res.status}`);
